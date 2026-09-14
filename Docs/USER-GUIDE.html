@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Pure Storage Host Validation / Readiness - Help</title>
+<style>
+:root {
+    --pure:#ff6b00;
+    --ink:#202124;
+    --muted:#57606a;
+    --border:#d0d7de;
+    --panel:#f6f8fa;
+    --blue:#0969da;
+    --green:#116329;
+    --yellow:#7d4e00;
+    --red:#a40e26;
+}
+* { box-sizing:border-box; }
+body {
+    margin:0;
+    font-family:"Segoe UI", Arial, sans-serif;
+    color:var(--ink);
+    background:#fff;
+    line-height:1.55;
+}
+header {
+    background:#111827;
+    color:white;
+    padding:28px 34px;
+    border-bottom:5px solid var(--pure);
+}
+header h1 { margin:0 0 4px 0; font-size:28px; }
+header .subtitle { color:#d1d5db; }
+.container {
+    display:grid;
+    grid-template-columns:260px minmax(0, 1fr);
+    gap:28px;
+    max-width:1320px;
+    margin:0 auto;
+    padding:28px 30px 50px 30px;
+}
+nav {
+    position:sticky;
+    top:18px;
+    align-self:start;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px;
+    background:#fff;
+}
+nav b { display:block; margin-bottom:8px; }
+nav a {
+    display:block;
+    color:var(--blue);
+    text-decoration:none;
+    padding:5px 2px;
+}
+nav a:hover { text-decoration:underline; }
+main { min-width:0; }
+section {
+    margin-bottom:34px;
+    scroll-margin-top:20px;
+}
+h2 {
+    margin:0 0 12px 0;
+    padding-bottom:7px;
+    border-bottom:1px solid var(--border);
+}
+h3 { margin-top:22px; }
+.note, .warning, .success {
+    border-left:5px solid;
+    border-radius:6px;
+    padding:12px 14px;
+    margin:14px 0;
+}
+.note { background:#ddf4ff; border-color:#54aeff; }
+.warning { background:#fff8c5; border-color:#d4a72c; }
+.success { background:#dafbe1; border-color:#2da44e; }
+table {
+    border-collapse:collapse;
+    width:100%;
+    margin:12px 0 18px 0;
+    font-size:14px;
+}
+th, td {
+    border:1px solid var(--border);
+    padding:8px 10px;
+    text-align:left;
+    vertical-align:top;
+}
+th { background:var(--panel); }
+code, pre { font-family:Consolas, "Courier New", monospace; }
+pre {
+    background:#0d1117;
+    color:#f0f6fc;
+    padding:12px 14px;
+    border-radius:6px;
+    overflow-x:auto;
+    white-space:pre-wrap;
+}
+kbd {
+    border:1px solid #b6b6b6;
+    border-bottom-width:2px;
+    border-radius:4px;
+    padding:1px 5px;
+    background:#fafafa;
+}
+ul, ol { padding-left:24px; }
+footer {
+    color:var(--muted);
+    border-top:1px solid var(--border);
+    margin-top:34px;
+    padding-top:14px;
+    font-size:12px;
+}
+@media (max-width:900px) {
+    .container { grid-template-columns:1fr; }
+    nav { position:static; }
+}
+</style>
+</head>
+<body>
+<header>
+    <h1>Pure Storage Host Validation / Readiness</h1>
+    <div class="subtitle">Full User Documentation &nbsp;•&nbsp; Version 1.4.11</div>
+</header>
+
+<div class="container">
+<nav>
+    <b>Contents</b>
+    <a href="#purpose">Purpose</a>
+    <a href="#prerequisites">Prerequisites</a>
+    <a href="#workflow">Recommended Workflow</a>
+    <a href="#fields">Main Configuration Fields</a>
+    <a href="#scopes">Audit Scopes</a>
+    <a href="#activecluster">Pure ActiveCluster</a>
+    <a href="#mpio">MPIO Policy</a>
+    <a href="#paths">Windows MPIO Path Limit</a>
+    <a href="#alua">ALUA Validation</a>
+    <a href="#results">Result Severity</a>
+    <a href="#report">HTML Report</a>
+    <a href="#preconnection">Pre-Connection State</a>
+    <a href="#postconnection">Post-Connection Validation</a>
+    <a href="#remediation">Remediation Safety</a>
+    <a href="#outofscope">Out of Scope</a>
+    <a href="#troubleshooting">Troubleshooting</a>
+</nav>
+
+<main>
+<section id="purpose">
+<h2>Purpose</h2>
+<p>Pure Storage Host Validation / Readiness is a read-only Windows host audit tool for Pure Storage FlashArray environments. It validates Windows, networking, iSCSI, MPIO, Hyper-V, Failover Cluster, Pure target connectivity, and optional Pure ActiveCluster host-side readiness.</p>
+<div class="note"><b>Operating principle:</b> this tool answers, <i>“Is this Windows host correctly prepared and connected for Pure Storage?”</i> Configuration and remediation belong in the iSCSI Host Tool or an approved manual change workflow.</div>
+<p>The validator does not configure hosts, create iSCSI sessions, initialize disks, create volumes, map LUNs, create CSVs, or modify FlashArray configuration.</p>
+</section>
+
+<section id="prerequisites">
+<h2>Prerequisites</h2>
+<ol>
+<li>Run from Windows PowerShell 5.1 as an elevated administrator.</li>
+<li>WinRM / PowerShell remoting must be available to remote target hosts.</li>
+<li>The supplied Windows credential must have administrative rights on the target hosts.</li>
+<li>For Pure target-connectivity tests, enter the Pure iSCSI target IP addresses.</li>
+<li>For Hyper-V or Failover Cluster validation, enable the applicable audit scope.</li>
+<li>For ActiveCluster validation, assign Pure targets to arrays and hosts to their local arrays in the GUI.</li>
+</ol>
+</section>
+
+<section id="workflow">
+<h2>Recommended Workflow</h2>
+<ol>
+<li>Enter the target Windows hosts.</li>
+<li>Enter all intended Pure iSCSI target IP addresses.</li>
+<li>Confirm the iSCSI NIC naming pattern and expected storage MTU.</li>
+<li>Select the required audit scopes.</li>
+<li>If ActiveCluster is used, configure topology, array names, target-to-array assignment, host-local-array mapping, MPIO policy, and minimum target paths.</li>
+<li>Set the Windows credential or select <b>Use Current User</b>.</li>
+<li>Run <b>Read-Only Audit</b>.</li>
+<li>Review FAIL and WARNING results first.</li>
+<li>Review Host Drift Summary and MPIO Summary.</li>
+<li>Export the HTML report.</li>
+<li>Perform approved remediation outside this validator.</li>
+<li>Re-run the audit to verify the resulting state.</li>
+</ol>
+</section>
+
+<section id="fields">
+<h2>Main Configuration Fields</h2>
+<h3>Target Hosts</h3>
+<p>Enter one Windows host per line. The field starts blank intentionally so the administrative workstation is not automatically audited.</p>
+<pre>host01
+host02
+host03</pre>
+
+<h3>Pure iSCSI Target IPs</h3>
+<p>Enter every Pure iSCSI target IP that should be reachable from the audited hosts, one per line. The validator tests TCP/3260 and records the Windows interface and source address selected for the route.</p>
+
+<h3>iSCSI NIC Name Pattern</h3>
+<p>Default: <code>iSCSI*</code>. This pattern identifies dedicated Windows storage NICs.</p>
+
+<h3>Expected Storage MTU</h3>
+<p>Default: <code>9000</code>. The validator compares the intended storage MTU to the Windows IP-interface MTU and the NIC driver Jumbo Packet setting.</p>
+<div class="warning"><b>MTU/Jumbo remediation is never automatic.</b> End-to-end switch, VLAN, host, and Pure target support must be verified first.</div>
+</section>
+
+<section id="scopes">
+<h2>Audit Scopes</h2>
+<table>
+<thead><tr><th>Scope</th><th>What It Validates</th></tr></thead>
+<tbody>
+<tr><td>Windows / Network</td><td>Host reachability, storage NIC discovery, IPv4 configuration, DNS registration, DNS servers, persistent default routes, interface state, and related Windows network settings.</td></tr>
+<tr><td>iSCSI / MPIO</td><td>Microsoft iSCSI Initiator service, Multipath-IO installation, PURE FlashArray MSDSM registration, configured target portals, active sessions, and visible Pure disks.</td></tr>
+<tr><td>Pure Target Connectivity</td><td>TCP/3260 reachability to every configured Pure target plus selected source NIC and source IP.</td></tr>
+<tr><td>Hyper-V</td><td>Hyper-V role/service state, storage NIC use by vSwitches, and explicit Live Migration use.</td></tr>
+<tr><td>Failover Cluster</td><td>Cluster membership, node state, storage-network cluster roles, quorum, physical disks, and CSV inventory.</td></tr>
+<tr><td>Extended NIC Checks</td><td>Driver version/date, RSS, queue count/profile, flow control, checksum offload, LSO, RDMA observation, and Jumbo Packet state.</td></tr>
+<tr><td>Pure ActiveCluster</td><td>Host-side topology, MPIO policy, runtime connectivity, ALUA, path counts, and locality.</td></tr>
+<tr><td>Compare Hosts / Detect Drift</td><td>Configuration consistency across equivalent hosts.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="activecluster">
+<h2>Pure ActiveCluster</h2>
+<h3>Topology</h3>
+<table>
+<thead><tr><th>Mode</th><th>Expected Behavior</th></tr></thead>
+<tbody>
+<tr><td>Uniform</td><td>Hosts are expected to have connectivity to both Pure arrays.</td></tr>
+<tr><td>Non-Uniform</td><td>Hosts are evaluated using their designated local-array mapping.</td></tr>
+</tbody>
+</table>
+
+<h3>Array Names</h3>
+<p>Array A and Array B names are friendly report labels. They do not establish a FlashArray connection and do not modify array configuration.</p>
+
+<h3>Target-to-Array Assignment</h3>
+<p>The list is populated from the configured Pure iSCSI target IPs. Every target must be assigned to Array A or Array B before ActiveCluster validation can run.</p>
+
+<h3>Host Local-Array Mapping</h3>
+<p>The list is populated from Target Hosts. Each host is assigned the Pure array expected to be local/preferred for host-side topology validation. This does not modify the FlashArray preferred-array setting.</p>
+</section>
+
+<section id="mpio">
+<h2>Pure MPIO Policy Validation</h2>
+<p><b>Pure Recommended (Auto)</b> evaluates Pure Storage policy according to actual per-device path count when that runtime data is available.</p>
+
+<table>
+<thead><tr><th>Observed Paths per Pure Device</th><th>Policy Evaluation</th></tr></thead>
+<tbody>
+<tr><td>1-10</td><td>RR or LQD is valid. RR is identified as preferred.</td></tr>
+<tr><td>11-32</td><td>LQD is expected.</td></tr>
+<tr><td>More than 32</td><td>Hard FAIL for the Windows path-limit rule. Reduce presented paths.</td></tr>
+<tr><td>Not yet available</td><td>Host/default policy is evaluated provisionally. Per-device policy becomes authoritative after Pure volumes are presented.</td></tr>
+</tbody>
+</table>
+
+<p>The validator keeps two concepts separate:</p>
+<ul>
+<li><b>Host/global MSDSM policy readiness:</b> what newly discovered Pure devices are likely to inherit.</li>
+<li><b>Per-device MPIO policy:</b> the actual policy of each visible Pure device. This becomes authoritative once storage is connected.</li>
+</ul>
+
+<p>A newly added path belongs to the existing MPIO device. Individual paths do not have their own load-balancing policy. If path expansion crosses the 10-path threshold, the validator re-evaluates the device policy.</p>
+</section>
+
+<section id="paths">
+<h2>Windows MPIO Path Limit</h2>
+<p>Windows supports a maximum of <b>32 MPIO paths per device</b>.</p>
+
+<table>
+<thead><tr><th>Path Count</th><th>Result</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>1-32</td><td style="color:var(--green);font-weight:700;">PASS</td><td>Within the Windows supported maximum.</td></tr>
+<tr><td>&gt;32</td><td style="color:var(--red);font-weight:700;">FAIL</td><td>Exceeds the supported Windows MPIO path count.</td></tr>
+<tr><td>Not correlated</td><td style="color:var(--blue);font-weight:700;">INFO</td><td>The validator cannot safely determine an authoritative per-device path count and does not guess.</td></tr>
+</tbody>
+</table>
+
+<p>The MPIO Summary reports the maximum observed path count for any correlated Pure device on each host and shows the Windows maximum beside it.</p>
+</section>
+
+<section id="alua">
+<h2>ALUA Validation</h2>
+<p>When Pure disks are visible, the tool attempts read-only Microsoft DSM ALUA inspection through Windows WMI/CIM data.</p>
+<p>Recognized states include:</p>
+<ul>
+<li>Active/Optimized</li>
+<li>Active/Unoptimized</li>
+<li>Standby</li>
+<li>Unavailable</li>
+<li>Not Used</li>
+</ul>
+<p>Uniform and Non-Uniform topology modes have different expected ALUA behavior. If the validator cannot safely correlate MSDSM/ALUA data with a Pure device, it reports INFO instead of inferring ownership.</p>
+</section>
+
+<section id="results">
+<h2>Result Severity</h2>
+<table>
+<thead><tr><th>Severity</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td style="color:var(--green);font-weight:700;">PASS</td><td>The observed state meets the validation rule.</td></tr>
+<tr><td style="color:var(--blue);font-weight:700;">INFO</td><td>Informational state, build-stage observation, or a condition not yet authoritatively testable.</td></tr>
+<tr><td style="color:var(--yellow);font-weight:700;">WARNING</td><td>The state differs from the recommended or expected configuration but is not a hard failure.</td></tr>
+<tr><td style="color:var(--red);font-weight:700;">FAIL</td><td>The state violates a required rule or supported limit.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="report">
+<h2>HTML Report</h2>
+<p>Use <b>Export HTML Report</b> after an audit. The exported report contains:</p>
+<ul>
+<li>Audit metadata and tool version</li>
+<li>Overall status</li>
+<li>PASS / INFO / WARNING / FAIL totals</li>
+<li>Host Drift Summary</li>
+<li>MPIO Summary</li>
+<li>Detailed Results grouped by severity and host</li>
+<li>Remediation Items with recommended action, risk, verification, and rollback guidance</li>
+</ul>
+<p><b>View HTML Report</b> opens the most recently exported report from the current application session.</p>
+</section>
+
+<section id="preconnection">
+<h2>Expected Pre-Connection State</h2>
+<div class="success">Before Pure volumes are presented, several INFO results are normal and do not represent failures.</div>
+<ul>
+<li>0 configured target portals</li>
+<li>0 active iSCSI sessions</li>
+<li>0 Pure disks</li>
+<li>0 cluster physical disks</li>
+<li>0 CSVs</li>
+<li>ALUA validation = INFO</li>
+<li>MPIO Max Paths / Device = Not available</li>
+</ul>
+</section>
+
+<section id="postconnection">
+<h2>Post-Storage Connection Validation</h2>
+<p>After Pure volumes and iSCSI sessions exist, run the full audit again. The following checks then become authoritative:</p>
+<ul>
+<li>Runtime Pure iSCSI session and connection state</li>
+<li>Source-NIC/source-IP path symmetry</li>
+<li>Unexpected live target addresses</li>
+<li>Per-Pure-device MPIO policy</li>
+<li>Per-device Windows path-count limit</li>
+<li>ALUA path states</li>
+<li>ActiveCluster runtime topology</li>
+</ul>
+</section>
+
+<section id="remediation">
+<h2>Remediation Safety</h2>
+<div class="warning"><b>This validator is read-only.</b> Remediation commands shown in the report are advisory and are never executed by this tool.</div>
+<ul>
+<li>Microsoft network bindings may later be suitable for confirmed remediation in the configuration tool.</li>
+<li>Persistent default routes can be handled through an approved remediation workflow.</li>
+<li>MTU/Jumbo changes remain guided-only.</li>
+<li>ActiveCluster topology/pathing and ALUA corrections remain guided-only.</li>
+<li>MPIO policy changes belong in the configuration tool and require explicit confirmation.</li>
+</ul>
+</section>
+
+<section id="outofscope">
+<h2>Out of Scope</h2>
+<p>The validator does not:</p>
+<ul>
+<li>Create or delete Pure hosts</li>
+<li>Create or modify Pure host groups</li>
+<li>Create Pods or Protection Groups</li>
+<li>Create volumes or assign LUNs</li>
+<li>Connect volumes to hosts or host groups</li>
+<li>Configure iSCSI target portals or sessions</li>
+<li>Initialize or format disks</li>
+<li>Create Failover Clusters or CSVs</li>
+<li>Change MPIO policy</li>
+<li>Change MTU or Jumbo Packet settings</li>
+<li>Modify FlashArray preferred-array settings</li>
+</ul>
+</section>
+
+<section id="troubleshooting">
+<h2>Troubleshooting</h2>
+<h3>No host results</h3>
+<p>Verify host names, credentials, WinRM, firewall policy, and administrator rights.</p>
+
+<h3>Pure target TCP test fails</h3>
+<p>Verify target IP, VLAN/routing, switch configuration, source NIC selection, Pure iSCSI interface state, and TCP/3260 reachability.</p>
+
+<h3>MPIO path count shows “Not available”</h3>
+<p>This is expected before Pure disks are presented. If Pure disks are already visible, inspect Detailed Results for MSDSM/ALUA correlation information.</p>
+
+<h3>ALUA remains INFO after storage is presented</h3>
+<p>Inspect the Detailed Results. The validator intentionally refuses to infer ALUA ownership when the Windows data cannot be safely correlated.</p>
+
+<h3>HTML audit report cannot be opened</h3>
+<p>Export the report first and verify that the selected destination remains accessible.</p>
+</section>
+
+<footer>
+Pure Storage Host Validation / Readiness &nbsp;•&nbsp; Version 1.4.11<br>
+Integrated documentation generated locally by the tool. No web connection is required.
+</footer>
+</main>
+</div>
+</body>
+</html>
