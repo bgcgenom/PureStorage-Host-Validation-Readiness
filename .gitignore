@@ -1,0 +1,75 @@
+# Logs and runtime output
+*.log
+Logs/
+logs/
+
+# Audit/report exports
+Reports/
+reports/
+Exports/
+exports/
+*Host-Readiness-Report*.html
+*Readiness-Report*.html
+*Audit-Report*.html
+*.report.html
+
+# Saved local state / environment profiles
+State/
+state/
+Profiles/
+profiles/
+*.state.json
+*.profile.json
+*.settings.json
+*.local.json
+
+# Credentials / secrets
+*.cred
+*.credential
+*.credentials
+*.secret
+*.secrets
+*.key
+*.pfx
+*.p12
+*.pem
+*.cer
+*.crt
+*.token
+.env
+.env.*
+
+# Build / packaging output
+bin/
+obj/
+build/
+dist/
+out/
+Release/
+releases/
+*.zip
+
+# Backups / temporary editor files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# PowerShell / IDE local state
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Environment-specific generated documentation/cache
+PureStorage-Host-Validation-Readiness/Help/
