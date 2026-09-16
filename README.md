@@ -5,6 +5,8 @@
 Pure Storage Host Validation / Readiness is a Windows PowerShell 5.1/WPF audit tool for validating Windows hosts that use **Pure Storage FlashArray** storage. It is deliberately Pure Storage-specific while remaining configurable across supported Windows host environments.
 
 > **Independent community project:** This repository is not an official Pure Storage product, is not affiliated with or endorsed by Pure Storage, Inc., and is provided without vendor support or warranty.
+>
+> **Read-only by design:** The validator does not make configuration changes to Windows hosts, network settings, MPIO configuration, Windows Failover Clustering, or Pure Storage FlashArray objects. It audits, reports, and provides guidance only.
 
 ## What the tool does
 
@@ -178,22 +180,3 @@ PureStorage-Host-Validation-Readiness/
     ├── TROUBLESHOOTING.md
     ├── SECURITY-SCOPE.md
     └── CHANGE-CHECKLIST.md
-```
-
-## Documentation
-
-- [Full User Guide](Docs/USER-GUIDE.html)
-- [Operations Guide](Docs/OPERATIONS-GUIDE.md)
-- [Troubleshooting](Docs/TROUBLESHOOTING.md)
-- [Security and Scope](Docs/SECURITY-SCOPE.md)
-- [Change Checklist](Docs/CHANGE-CHECKLIST.md)
-
-## License
-
-Released under the [MIT License](LICENSE).
-
-## Disclaimer
-
-This is an independent community project. It is not an official Pure Storage product and is not affiliated with, maintained by, supported by, or endorsed by Pure Storage, Inc.
-
-Use the tool in accordance with your organization's change-control, security, and support requirements. Validate all recommendations against the applicable Pure Storage and Microsoft documentation for the software and hardware versions in your environment.
