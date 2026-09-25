@@ -97,7 +97,7 @@ The validator separates:
 - host/global MSDSM policy readiness; and
 - actual per-Pure-device MPIO policy.
 
-Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.0 reports RRWS explicitly and does not silently treat the host/global RR default as proof of the device policy. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
+Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.0 reports RRWS explicitly and does not silently treat the host/global RR default as proof of the device policy. Path health and per-device policy assessment are reported separately. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
 
 A path itself does not have a load-balancing policy. Policy applies to the MPIO device/LUN.
 
