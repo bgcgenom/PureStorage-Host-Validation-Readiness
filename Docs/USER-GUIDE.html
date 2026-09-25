@@ -251,18 +251,18 @@ host03</pre>
 <tr><td>1-10</td><td>RR or LQD is valid. RR is identified as preferred.</td></tr>
 <tr><td>11-32</td><td>LQD is expected.</td></tr>
 <tr><td>More than 32</td><td>Hard FAIL for the Windows path-limit rule. Reduce presented paths.</td></tr>
-<tr><td>Not yet available</td><td>Host/default policy is evaluated provisionally. Per-device policy becomes authoritative after Pure volumes are presented.</td></tr>
+<tr><td>Not yet available</td><td>Global/default policy is evaluated provisionally. Actual per-device policy is assessed separately when Windows exposes per-device runtime data.</td></tr>
 </tbody>
 </table>
 
 <p>The validator keeps two concepts separate:</p>
 <ul>
-<li><b>Host/global MSDSM policy readiness:</b> what newly discovered Pure devices are likely to inherit.</li>
-<li><b>Per-device MPIO policy:</b> the actual policy of each visible Pure device. This becomes authoritative once storage is connected.</li>
+<li><b>Host/global MSDSM default-policy readiness:</b> the value reported by Get-MSDSMGlobalDefaultLoadBalancePolicy and used as the host baseline for newly managed devices.</li>
+<li><b>Per-device MPIO policy:</b> the actual policy Windows/MSDSM reports for each visible Pure device. This is evaluated independently from the global/default baseline.</li>
 </ul>
 
 <p>A newly added path belongs to the existing MPIO device. Individual paths do not have their own load-balancing policy. If path expansion crosses the 10-path threshold, the validator re-evaluates the device policy.</p>
-<div class="note"><b>RRWS:</b> Windows may report <b>Round Robin with Subset</b> for an ALUA-aware device. v1.5.0 reports RRWS explicitly. It does not silently treat the host/global RR default as proof of the device policy and does not automatically remediate RRWS without topology-specific Pure guidance.</div>
+<div class="note"><b>RRWS:</b> Windows may report <b>Round Robin with Subset</b> for an ALUA-aware device. v1.5.0 reports RRWS explicitly. It does not silently treat the host/global RR default as proof of the existing device policy and does not automatically remediate RRWS without topology-specific Pure guidance.</div>
 </section>
 
 <section id="paths">
