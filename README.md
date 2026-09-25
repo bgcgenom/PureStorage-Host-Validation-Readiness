@@ -90,14 +90,14 @@ When **Pure Recommended (Auto)** is selected:
 | 1-10 | RR or LQD is valid; RR is identified as preferred |
 | 11-32 | LQD is expected |
 | More than 32 | FAIL: exceeds the Windows-supported MPIO path maximum |
-| Runtime count unavailable | Host/default policy is evaluated provisionally; per-device validation becomes authoritative when storage is connected |
+| Runtime count unavailable | Global/default policy is evaluated provisionally; actual device policy is assessed separately when Windows exposes per-device runtime data |
 
 The validator separates:
 
-- host/global MSDSM policy readiness; and
+- host/global MSDSM default-policy readiness; and
 - actual per-Pure-device MPIO policy.
 
-Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.0 reports RRWS explicitly and does not silently treat the host/global RR default as proof of the device policy. Path health and per-device policy assessment are reported separately. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
+Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.0 labels RR from `Get-MSDSMGlobalDefaultLoadBalancePolicy` as the **global/default MPIO policy** and does not treat that value as proof of an existing device's effective policy. Path health and per-device policy assessment are reported separately. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
 
 A path itself does not have a load-balancing policy. Policy applies to the MPIO device/LUN.
 
