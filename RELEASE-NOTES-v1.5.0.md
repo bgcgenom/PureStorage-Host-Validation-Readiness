@@ -16,6 +16,7 @@
 - Explicitly reports **Round Robin with Subset (RRWS)** when Windows exposes it.
 - Separates device path-health status from per-device MPIO policy assessment so a healthy path set does not imply that RRWS itself has been policy-approved.
 - Does not silently equate the host/global RR default with the existing per-device policy.
+- Renames the host-level finding to **Global/default MPIO policy** and explicitly identifies it as separate from the effective policy of existing Pure devices.
 - Does not automatically remediate or classify RRWS against the RR/LQD baseline until the applicable Pure Storage Windows + ALUA/ActiveCluster guidance is confirmed for the topology.
 - Uses DSM_QueryLBPolicy_V2 policy evidence when Get-MSDSMLoadBalancePolicy does not expose per-disk policy, avoiding a contradictory "policy unavailable" message.
 - Keeps detailed per-path ALUA evidence in the existing read-only findings.
