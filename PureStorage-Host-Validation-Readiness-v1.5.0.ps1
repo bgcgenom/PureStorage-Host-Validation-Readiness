@@ -1373,28 +1373,28 @@ function Add-ActiveClusterHostFindings {
         $policyExpected = if ($ExpectedMpioPolicy -and $ExpectedMpioPolicy -ne "Auto") {
             $ExpectedMpioPolicy
         } else {
-            "Pure Recommended: RR or LQD before runtime path count is known; LQD required above 10 paths"
+            "Pure recommended global/default baseline: RR or LQD before runtime path count is known; device-level policy is assessed separately when available"
         }
 
         Add-Result (New-Finding -HostName $hostName -Category "Pure ActiveCluster" `
-            -CheckId "ActiveCluster.MpioPolicy" -Check "Pure MPIO load-balancing policy" `
+            -CheckId "ActiveCluster.MpioPolicy" -Check "Global/default MPIO policy" `
             -Result $(if ($policyGood) {"PASS"} else {"WARNING"}) `
             -Current $policy -Expected $policyExpected `
             -Details $(if ($policyGood) {
-                "The detected Microsoft DSM load-balancing policy is valid for the current Pure Storage validation stage. Per-device path-count-aware validation becomes authoritative after Pure volumes are presented."
+                "The detected Microsoft DSM global/default load-balancing policy is valid for the configured baseline. This value does not prove the effective policy of an existing Pure MPIO device; per-device policy is assessed separately from Windows/MSDSM runtime data when available."
             } else {
-                "Review the Microsoft DSM load-balancing policy against the approved Pure Storage host standard."
+                "Review the Microsoft DSM global/default load-balancing policy against the approved Pure Storage host standard. Existing Pure device policy must be evaluated separately."
             }) `
             -Remediation $(if (-not $policyGood) {
-                "Review and set the Pure Storage MPIO policy according to the approved host standard. Do not change production path policy without change control."
+                "Review and set the Microsoft DSM global/default MPIO policy according to the approved Pure Storage host standard. Do not change an existing Pure device policy solely from this finding."
             } else {""}) `
-            -Verification "Confirm the Microsoft DSM load-balancing policy after any approved change.")
+            -Verification "Confirm the Microsoft DSM global/default load-balancing policy after any approved change and review device-level policy separately when Pure MPIO devices are present.")
     }
     else {
         Add-Result (New-Finding -HostName $hostName -Category "Pure ActiveCluster" `
-            -CheckId "ActiveCluster.MpioPolicy" -Check "Pure MPIO load-balancing policy" `
+            -CheckId "ActiveCluster.MpioPolicy" -Check "Global/default MPIO policy" `
             -Result "INFO" -Current "Unable to determine" `
-            -Expected "RR or LQD, or an explicitly configured Pure Storage host standard")
+            -Expected "Global/default RR or LQD, or an explicitly configured Pure Storage host standard")
     }
 
     $activeTargets = Get-ActiveConnectionTargets -Inventory $Inventory
@@ -2572,7 +2572,7 @@ Hyper-V, Failover Cluster, and network design before making production changes.
 
         $feature = $hostResults | Where-Object { $_.Check -eq "Multipath-IO feature" } | Select-Object -First 1
         $msdsm = $hostResults | Where-Object { $_.Check -eq "PURE FlashArray MSDSM registration" } | Select-Object -First 1
-        $policy = $hostResults | Where-Object { $_.Check -eq "Pure MPIO load-balancing policy" } | Select-Object -First 1
+        $policy = $hostResults | Where-Object { $_.Check -eq "Global/default MPIO policy" } | Select-Object -First 1
         $pureDisks = $hostResults | Where-Object { $_.Check -eq "Pure disks visible to Windows" } | Select-Object -First 1
         $sessions = $hostResults | Where-Object { $_.Check -eq "Active iSCSI sessions" } | Select-Object -First 1
         $pathCountFindings = @($hostResults | Where-Object { $_.CheckId -like "PureRuntime.DiskMpioPathCount.*" })
@@ -3267,7 +3267,7 @@ Integrated documentation generated locally by the tool. No web connection is req
                                 <ComboBoxItem Content="Non-Uniform"/>
                             </ComboBox>
 
-                            <TextBlock Text="Expected MPIO policy" FontWeight="Bold" Margin="0,8,0,4"/>
+                            <TextBlock Text="Expected global/default MPIO policy" FontWeight="Bold" Margin="0,8,0,4"/>
                             <ComboBox x:Name="ExpectedMpioPolicyComboBox" Width="150" Height="25" SelectedIndex="0">
                                 <ComboBoxItem Content="Pure Recommended (Auto)"/>
                                 <ComboBoxItem Content="RR"/>
