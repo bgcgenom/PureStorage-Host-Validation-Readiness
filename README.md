@@ -1,6 +1,6 @@
 # Pure Storage Host Validation / Readiness
 
-**Current release:** v1.4.11
+**Current release:** v1.5.0
 
 Pure Storage Host Validation / Readiness is a Windows PowerShell 5.1/WPF audit tool for validating Windows hosts that use **Pure Storage FlashArray** storage. It is deliberately Pure Storage-specific while remaining configurable across supported Windows host environments.
 
@@ -27,6 +27,7 @@ The tool performs a read-only readiness and runtime audit of Windows hosts for P
 - Per-device MPIO policy
 - Windows MPIO path-count limits
 - Read-only ALUA path-state information when Windows exposes safely correlatable data
+- Pure Device MPIO / ALUA runtime summary with Windows policy name, actual path count, and optimized/unoptimized path-state counts
 
 The tool exports a standalone HTML audit report and includes integrated HTML Help directly in the GUI.
 
@@ -38,7 +39,7 @@ The tool is still generic across host environments: site names, array names, tar
 
 ## Current release
 
-`PureStorage-Host-Validation-Readiness-v1.4.11.ps1`
+`PureStorage-Host-Validation-Readiness-v1.5.0.ps1`
 
 The GUI displays the current tool version and provides a **Help** button beside the version number.
 
@@ -65,7 +66,7 @@ Configuration/remediation belongs in the companion Pure Storage iSCSI Host Tool 
 
 ## Quick start
 
-1. Launch `PureStorage-Host-Validation-Readiness-v1.4.11.ps1` from an elevated Windows PowerShell 5.1 session.
+1. Launch `PureStorage-Host-Validation-Readiness-v1.5.0.ps1` from an elevated Windows PowerShell 5.1 session.
 2. Enter one target host per line.
 3. Enter the Pure iSCSI target addresses that should be reachable from those hosts.
 4. Confirm the iSCSI NIC naming pattern and expected storage MTU.
@@ -74,7 +75,7 @@ Configuration/remediation belongs in the companion Pure Storage iSCSI Host Tool 
 7. Set credentials or select **Use Current User**.
 8. Run **Read-Only Audit**.
 9. Review FAIL and WARNING findings first.
-10. Review the Host Drift Summary and MPIO Summary.
+10. Review the Host Drift Summary, MPIO Summary, and Pure Device MPIO / ALUA Summary.
 11. Export the HTML report.
 12. Perform approved remediation separately, then re-run the audit.
 
@@ -89,12 +90,14 @@ When **Pure Recommended (Auto)** is selected:
 | 1-10 | RR or LQD is valid; RR is identified as preferred |
 | 11-32 | LQD is expected |
 | More than 32 | FAIL: exceeds the Windows-supported MPIO path maximum |
-| Runtime count unavailable | Host/default policy is evaluated provisionally; per-device validation becomes authoritative when storage is connected |
+| Runtime count unavailable | Global/default policy is evaluated provisionally; actual device policy is assessed separately when Windows exposes per-device runtime data |
 
 The validator separates:
 
-- host/global MSDSM policy readiness; and
+- host/global MSDSM default-policy readiness; and
 - actual per-Pure-device MPIO policy.
+
+Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.0 labels RR from `Get-MSDSMGlobalDefaultLoadBalancePolicy` as the **global/default MPIO policy** and does not treat that value as proof of an existing device's effective policy. Path health and per-device policy assessment are reported separately. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
 
 A path itself does not have a load-balancing policy. Policy applies to the MPIO device/LUN.
 
@@ -130,6 +133,7 @@ The tool provides an on-screen result grid and can export a standalone HTML repo
 - PASS / INFO / WARNING / FAIL totals
 - Host Drift Summary
 - MPIO Summary
+- Pure Device MPIO / ALUA Summary
 - detailed findings grouped by severity and host
 - remediation guidance where applicable
 
@@ -170,7 +174,7 @@ The validator does not:
 
 ```text
 PureStorage-Host-Validation-Readiness/
-├── PureStorage-Host-Validation-Readiness-v1.4.11.ps1
+├── PureStorage-Host-Validation-Readiness-v1.5.0.ps1
 ├── README.md
 ├── LICENSE
 ├── .gitignore
