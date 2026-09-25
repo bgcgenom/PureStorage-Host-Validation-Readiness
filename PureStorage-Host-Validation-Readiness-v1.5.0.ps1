@@ -1009,10 +1009,20 @@ function Add-PureRuntimeConnectivityFindings {
             }
         }
         else {
-            Add-Result (New-Finding -HostName $hostName -Category "Pure Runtime Connectivity" `
-                -CheckId "PureRuntime.DiskMpioPolicy" -Check "Per-Pure-disk MPIO policy" `
-                -Result "INFO" -Current "Not exposed by this Windows build/cmdlet set" `
-                -Expected "Pure Recommended: RR or LQD at <=10 paths; LQD above 10 paths")
+            $v2Policies = @(Get-PureAluaDevices -Inventory $Inventory)
+            if ($v2Policies.Count -gt 0) {
+                Add-Result (New-Finding -HostName $hostName -Category "Pure Runtime Connectivity" `
+                    -CheckId "PureRuntime.DiskMpioPolicy" -Check "Per-Pure-disk MPIO policy" `
+                    -Result "INFO" -Current "Available from MSDSM V2 runtime data" `
+                    -Expected "See Pure Device MPIO / ALUA findings for actual per-device policy" `
+                    -Details "Get-MSDSMLoadBalancePolicy did not expose per-disk policy, but DSM_QueryLBPolicy_V2 did. The validator uses the V2 runtime evidence instead of reporting the policy as unavailable.")
+            }
+            else {
+                Add-Result (New-Finding -HostName $hostName -Category "Pure Runtime Connectivity" `
+                    -CheckId "PureRuntime.DiskMpioPolicy" -Check "Per-Pure-disk MPIO policy" `
+                    -Result "INFO" -Current "Not exposed by this Windows build/cmdlet set" `
+                    -Expected "Pure Recommended: RR or LQD at <=10 paths; LQD above 10 paths")
+            }
         }
     }
 }
@@ -1180,18 +1190,63 @@ function Add-PureAluaFindings {
 
         Add-Result (New-Finding -HostName $hostName -Category "Pure Device MPIO / ALUA" `
             -CheckId ("PureDevice.RuntimeSummary.Device{0}" -f $deviceIndex) `
-            -Check ("Pure MPIO device {0} runtime summary" -f $deviceIndex) `
+            -Check ("Pure MPIO device {0} path health" -f $deviceIndex) `
             -Result $deviceSummaryResult `
-            -Current ("Policy={0}; PolicyCode={1}; Paths={2}; AO={3}; AU={4}; Standby={5}; Unavailable={6}; NotUsed={7}; Failed={8}" -f `
-                $devicePolicyName,[int]$device.LoadBalancePolicy,$paths.Count,$ao,$au,$sb,$ua,$nu,$failed) `
+            -Current ("Paths={0}; AO={1}; AU={2}; Standby={3}; Unavailable={4}; NotUsed={5}; Failed={6}" -f `
+                $paths.Count,$ao,$au,$sb,$ua,$nu,$failed) `
             -Expected ("<= {0} Windows MPIO paths/device; healthy ALUA path states consistent with the configured topology" -f $script:WindowsMpioMaxPathsPerDevice) `
-            -Details ("MSDSM V2 instance: {0}; ALUA support: {1}. This is read-only device evidence. Policy, path count, and ALUA state are reported independently of the host/global default policy." -f $instance,$aluaSupportText) `
+            -Details ("MSDSM V2 instance: {0}; ALUA support: {1}. This finding evaluates path health only. The observed per-device load-balancing policy is reported separately." -f $instance,$aluaSupportText) `
             -Remediation $(if ($deviceSummaryResult -eq "FAIL") {
                 "Reduce the presented path count to the Windows-supported maximum or lower after reviewing the approved Pure topology. The validator does not change pathing."
             } elseif ($deviceSummaryResult -eq "WARNING") {
                 "Review failed, unavailable, or unknown paths and confirm the intended Pure ActiveCluster topology. Do not manually force ALUA states."
             } else {""}) `
-            -Verification "Re-run the audit and compare the per-device policy, path count, and ALUA state summary.")
+            -Verification "Re-run the audit and compare the per-device path count and ALUA state summary.")
+
+        $devicePolicyCode = [int]$device.LoadBalancePolicy
+        $devicePolicyResult = "INFO"
+        $devicePolicyExpected = "Observed policy reported independently from host/global default"
+        $devicePolicyDetails = "The validator reports the actual device policy exposed by DSM_QueryLBPolicy_V2."
+
+        if ($devicePolicyCode -eq 3) {
+            $devicePolicyResult = "INFO"
+            $devicePolicyExpected = "RRWS observed - report-only pending topology-specific Pure guidance"
+            $devicePolicyDetails = "Windows reports Round Robin with Subset (RRWS) for this ALUA-aware Pure device. The validator does not silently equate RRWS with the host/global RR default and does not recommend changing it until the applicable Pure Storage Windows + ALUA/ActiveCluster guidance is confirmed for this topology."
+        }
+        elseif ($devicePolicyCode -eq 2) {
+            if ($paths.Count -gt 10) {
+                $devicePolicyResult = "FAIL"
+                $devicePolicyExpected = "LQD expected for 11-32 paths"
+                $devicePolicyDetails = "Round Robin is valid in the agreed Pure baseline at 10 or fewer paths. This device has more than 10 paths."
+            }
+            else {
+                $devicePolicyResult = "PASS"
+                $devicePolicyExpected = "RR or LQD valid at <=10 paths; RR preferred"
+                $devicePolicyDetails = "The observed Round Robin policy matches the agreed Pure baseline for this path count."
+            }
+        }
+        elseif ($devicePolicyCode -eq 4) {
+            $devicePolicyResult = "PASS"
+            $devicePolicyExpected = if ($paths.Count -gt 10) { "LQD expected for 11-32 paths" } else { "RR or LQD valid at <=10 paths; RR preferred" }
+            $devicePolicyDetails = "The observed Dynamic Least Queue Depth policy is valid for the current path count."
+        }
+        else {
+            $devicePolicyResult = "WARNING"
+            $devicePolicyExpected = "RR or LQD per the agreed Pure baseline; RRWS is report-only pending guidance"
+            $devicePolicyDetails = "The observed device policy is reported, but it does not match the RR/LQD baseline and is not the RRWS exception currently treated as report-only."
+        }
+
+        Add-Result (New-Finding -HostName $hostName -Category "Pure Device MPIO / ALUA" `
+            -CheckId ("PureDevice.PolicyObservation.Device{0}" -f $deviceIndex) `
+            -Check ("Pure MPIO device {0} policy assessment" -f $deviceIndex) `
+            -Result $devicePolicyResult `
+            -Current ("{0} (PolicyCode={1}); Paths={2}" -f $devicePolicyName,$devicePolicyCode,$paths.Count) `
+            -Expected $devicePolicyExpected `
+            -Details $devicePolicyDetails `
+            -Remediation $(if ($devicePolicyResult -eq "FAIL" -or $devicePolicyResult -eq "WARNING") {
+                "Review the approved Pure Storage MPIO guidance before changing the per-device policy. This validator does not make policy changes."
+            } else {""}) `
+            -Verification "Re-run the audit after any approved policy change and confirm the actual per-device policy from DSM_QueryLBPolicy_V2.")
 
         if ($topologyMode -eq "Uniform") {
             $good = (
@@ -2657,7 +2712,7 @@ Hyper-V, Failover Cluster, and network design before making production changes.
     }
 
     [void]$pureDeviceSummary.AppendLine('</tbody></table>')
-    [void]$pureDeviceSummary.AppendLine('<div class="small" style="margin-top:8px;">Per-device policy names come from Windows/MSDSM runtime data. ALUA state counts come from DSM_QueryLBPolicy_V2. RRWS is reported explicitly and is not silently remediated or automatically treated as equivalent to the host/global RR setting.</div>')
+    [void]$pureDeviceSummary.AppendLine('<div class="small" style="margin-top:8px;">Path-health rows evaluate path count and ALUA state. Policy-assessment rows report the actual Windows/MSDSM per-device policy separately. RRWS is reported as INFO and is not silently remediated or treated as equivalent to the host/global RR setting.</div>')
     [void]$pureDeviceSummary.AppendLine('</div>')
 
     $html = $template
