@@ -2945,6 +2945,7 @@ host03</pre>
 </ul>
 
 <p>A newly added path belongs to the existing MPIO device. Individual paths do not have their own load-balancing policy. If path expansion crosses the 10-path threshold, the validator re-evaluates the device policy.</p>
+<div class="note"><b>RRWS:</b> Windows may report <b>Round Robin with Subset</b> for an ALUA-aware device. v1.5.0 reports RRWS explicitly. It does not silently treat the host/global RR default as proof of the device policy and does not automatically remediate RRWS without topology-specific Pure guidance.</div>
 </section>
 
 <section id="paths">
@@ -2975,6 +2976,7 @@ host03</pre>
 <li>Not Used</li>
 </ul>
 <p>Uniform and Non-Uniform topology modes have different expected ALUA behavior. If the validator cannot safely correlate MSDSM/ALUA data with a Pure device, it reports INFO instead of inferring ownership.</p>
+<p>The Pure Device MPIO / ALUA Summary reports the Windows/MSDSM policy name, path count, and aggregate Active/Optimized and Active/Unoptimized state counts for each safely identified Pure MPIO device.</p>
 </section>
 
 <section id="results">
@@ -2999,6 +3001,7 @@ host03</pre>
 <li>PASS / INFO / WARNING / FAIL totals</li>
 <li>Host Drift Summary</li>
 <li>MPIO Summary</li>
+<li>Pure Device MPIO / ALUA Summary</li>
 <li>Detailed Results grouped by severity and host</li>
 <li>Remediation Items with recommended action, risk, verification, and rollback guidance</li>
 </ul>
