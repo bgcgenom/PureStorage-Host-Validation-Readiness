@@ -1751,6 +1751,14 @@ function Add-InventoryFindings {
             -ArrayAName $ArrayAName `
             -ArrayBName $ArrayBName `
             -MinimumPathsPerArray $MinimumPathsPerArray
+
+        # Run device-level MPIO/ALUA discovery even when ActiveCluster validation is not selected.
+        # ActiveCluster mode invokes the same function below with topology-aware expectations.
+        if (-not $DoActiveCluster) {
+            Add-PureAluaFindings -Inventory $Inventory `
+                -Topology "Disabled" `
+                -MinimumPathsPerArray $MinimumPathsPerArray
+        }
     }
 
     if ($DoActiveCluster) {
@@ -2513,13 +2521,23 @@ Hyper-V, Failover Cluster, and network design before making production changes.
         $pureDisks = $hostResults | Where-Object { $_.Check -eq "Pure disks visible to Windows" } | Select-Object -First 1
         $sessions = $hostResults | Where-Object { $_.Check -eq "Active iSCSI sessions" } | Select-Object -First 1
         $pathCountFindings = @($hostResults | Where-Object { $_.CheckId -like "PureRuntime.DiskMpioPathCount.*" })
+        $deviceRuntimeFindings = @($hostResults | Where-Object { $_.CheckId -like "PureDevice.RuntimeSummary.*" })
 
         $observedPathCounts = @(
-            $pathCountFindings |
-                ForEach-Object {
-                    $parsed = 0
-                    if ([int]::TryParse([string]$_.Current, [ref]$parsed)) { $parsed }
-                } |
+            @(
+                $pathCountFindings |
+                    ForEach-Object {
+                        $parsed = 0
+                        if ([int]::TryParse([string]$_.Current, [ref]$parsed)) { $parsed }
+                    }
+            ) +
+            @(
+                $deviceRuntimeFindings |
+                    ForEach-Object {
+                        $m = [regex]::Match([string]$_.Current, "(?:^|;\s*)Paths=(\d+)")
+                        if ($m.Success) { [int]$m.Groups[1].Value }
+                    }
+            ) |
                 Where-Object { $_ -gt 0 }
         )
 
@@ -2536,7 +2554,7 @@ Hyper-V, Failover Cluster, and network design before making production changes.
         $diskText = if ($pureDisks) { [string]$pureDisks.Current } else { "Not checked" }
         $sessionText = if ($sessions) { [string]$sessions.Current } else { "Not checked" }
 
-        $mpioRelevant = @($feature,$msdsm,$policy) + @($pathCountFindings) | Where-Object { $_ }
+        $mpioRelevant = @($feature,$msdsm,$policy) + @($pathCountFindings) + @($deviceRuntimeFindings) | Where-Object { $_ }
         $mpioSeverity = "PASS"
 
         if (@($mpioRelevant | Where-Object { $_.Result -eq "FAIL" }).Count -gt 0) {
