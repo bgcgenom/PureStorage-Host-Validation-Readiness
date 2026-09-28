@@ -175,12 +175,25 @@ The validator does not:
 ```text
 PureStorage-Host-Validation-Readiness/
 ├── PureStorage-Host-Validation-Readiness-v1.5.0.ps1
+├── RELEASE-NOTES-v1.5.0.md
+├── Archive/
+│   └── PureStorage-Host-Validation-Readiness-v1.4.11.ps1
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   └── workflows/
+│       └── validate-powershell.yml
+├── Docs/
+│   ├── USER-GUIDE.html
+│   ├── OPERATIONS-GUIDE.md
+│   ├── TROUBLESHOOTING.md
+│   ├── SECURITY-SCOPE.md
+│   └── CHANGE-CHECKLIST.md
 ├── README.md
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
 ├── LICENSE
-├── .gitignore
-└── Docs/
-    ├── USER-GUIDE.html
-    ├── OPERATIONS-GUIDE.md
-    ├── TROUBLESHOOTING.md
-    ├── SECURITY-SCOPE.md
-    └── CHANGE-CHECKLIST.md
+└── .gitignore
+```
