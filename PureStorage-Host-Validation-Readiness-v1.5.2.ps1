@@ -232,11 +232,12 @@ $InventoryScript = {
         PureDSM             = $false
         MpioPolicy          = ""
         Portals             = @()
-        Targets             = @()        Sessions                    = @()
-        Connections                 = @()
-        PersistentTargets           = @()
-        PersistentTargetsAvailable  = $false
-        PureDisks           = @()
+        Targets                    = @()
+        Sessions                   = @()
+        Connections                = @()
+        PersistentTargets          = @()
+        PersistentTargetsAvailable = $false
+        PureDisks                  = @()
         DiskMpioPolicies    = @()
         AluaDevices         = @()
         HyperV              = $null
