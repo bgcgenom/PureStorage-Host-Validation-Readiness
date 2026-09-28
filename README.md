@@ -1,6 +1,6 @@
 # Pure Storage Host Validation / Readiness
 
-**Current release:** v1.5.0
+**Current release:** v1.5.1
 
 Pure Storage Host Validation / Readiness is a Windows PowerShell 5.1/WPF audit tool for validating Windows hosts that use **Pure Storage FlashArray** storage. It is deliberately Pure Storage-specific while remaining configurable across supported Windows host environments.
 
@@ -29,7 +29,7 @@ The tool performs a read-only readiness and runtime audit of Windows hosts for P
 - Read-only ALUA path-state information when Windows exposes safely correlatable data
 - Pure Device MPIO / ALUA runtime summary with Windows policy name, actual path count, and optimized/unoptimized path-state counts
 
-The tool exports a standalone HTML audit report and includes integrated HTML Help directly in the GUI.
+The tool exports a standalone HTML audit report and includes integrated HTML Help directly in the GUI. In v1.5.1, the Pure Device MPIO / ALUA Summary is collapsible by host and then by device so path-health and policy-assessment findings stay together for each device.
 
 ## Pure Storage-specific scope
 
@@ -39,7 +39,7 @@ The tool is still generic across host environments: site names, array names, tar
 
 ## Current release
 
-`PureStorage-Host-Validation-Readiness-v1.5.0.ps1`
+`PureStorage-Host-Validation-Readiness-v1.5.1.ps1`
 
 The GUI displays the current tool version and provides a **Help** button beside the version number.
 
@@ -66,7 +66,7 @@ Configuration/remediation belongs in the companion Pure Storage iSCSI Host Tool 
 
 ## Quick start
 
-1. Launch `PureStorage-Host-Validation-Readiness-v1.5.0.ps1` from an elevated Windows PowerShell 5.1 session.
+1. Launch `PureStorage-Host-Validation-Readiness-v1.5.1.ps1` from an elevated Windows PowerShell 5.1 session.
 2. Enter one target host per line.
 3. Enter the Pure iSCSI target addresses that should be reachable from those hosts.
 4. Confirm the iSCSI NIC naming pattern and expected storage MTU.
@@ -97,7 +97,7 @@ The validator separates:
 - host/global MSDSM default-policy readiness; and
 - actual per-Pure-device MPIO policy.
 
-Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.0 labels RR from `Get-MSDSMGlobalDefaultLoadBalancePolicy` as the **global/default MPIO policy** and does not treat that value as proof of an existing device's effective policy. Path health and per-device policy assessment are reported separately. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
+Windows can report **Round Robin with Subset (RRWS)** for an existing ALUA-aware MPIO device. v1.5.1 labels RR from `Get-MSDSMGlobalDefaultLoadBalancePolicy` as the **global/default MPIO policy** and does not treat that value as proof of an existing device's effective policy. Path health and per-device policy assessment are reported separately. RRWS is report-only unless the applicable Pure Storage guidance for the specific Windows/ALUA/ActiveCluster topology establishes a deterministic validation rule.
 
 A path itself does not have a load-balancing policy. Policy applies to the MPIO device/LUN.
 
@@ -174,7 +174,7 @@ The validator does not:
 
 ```text
 PureStorage-Host-Validation-Readiness/
-├── PureStorage-Host-Validation-Readiness-v1.5.0.ps1
+├── PureStorage-Host-Validation-Readiness-v1.5.1.ps1
 ├── RELEASE-NOTES-v1.5.0.md
 ├── Archive/
 │   └── PureStorage-Host-Validation-Readiness-v1.4.11.ps1
