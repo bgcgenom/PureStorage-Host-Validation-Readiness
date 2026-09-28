@@ -1,0 +1,81 @@
+name: Validate PowerShell
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  parse:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate current Host Validation script
+        shell: powershell
+        run: |
+          $Files = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter 'PureStorage-Host-Validation-Readiness-v*.ps1' -File
+
+          if ($Files.Count -ne 1) {
+              throw "Expected exactly one current Host Validation / Readiness script in the repository root. Found $($Files.Count)."
+          }
+
+          "TOOL_PATH=$($Files[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Validating $($Files[0].Name)"
+
+      - name: Parse PowerShell
+        shell: powershell
+        run: |
+          $Errors = $null
+          $Tokens = $null
+
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+              $env:TOOL_PATH,
+              [ref]$Tokens,
+              [ref]$Errors
+          )
+
+          if ($Errors -and $Errors.Count -gt 0) {
+              $Errors | Format-List *
+              exit 1
+          }
+
+          Write-Host 'PowerShell parser check passed.'
+
+      - name: Validate embedded XAML
+        shell: powershell
+        run: |
+          $Raw = Get-Content -Path $env:TOOL_PATH -Raw
+          $Pattern = '(?s)\[xml\]\$Xaml\s*=\s*@''\r?\n(.*?)\r?\n''@'
+          $Match = [regex]::Match($Raw, $Pattern)
+
+          if (-not $Match.Success) {
+              throw 'Embedded XAML here-string was not found.'
+          }
+
+          [xml]$XamlDocument = $Match.Groups[1].Value
+          Write-Host 'Embedded XAML XML parse passed.'
+
+          Add-Type -AssemblyName PresentationFramework
+          Add-Type -AssemblyName PresentationCore
+          Add-Type -AssemblyName WindowsBase
+
+          $Reader = New-Object System.Xml.XmlNodeReader $XamlDocument
+
+          try {
+              $Window = [Windows.Markup.XamlReader]::Load($Reader)
+              if (-not $Window) {
+                  throw 'XamlReader returned no Window object.'
+              }
+          }
+          finally {
+              if ($Reader) {
+                  $Reader.Close()
+              }
+          }
+
+          Write-Host 'WPF XAML load passed.'
