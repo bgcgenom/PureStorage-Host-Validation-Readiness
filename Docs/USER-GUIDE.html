@@ -122,7 +122,7 @@ footer {
 <body>
 <header>
     <h1>Pure Storage Host Validation / Readiness</h1>
-    <div class="subtitle">Full User Documentation &nbsp;•&nbsp; Version 1.5.0</div>
+    <div class="subtitle">Full User Documentation &nbsp;•&nbsp; Version 1.5.2</div>
 </header>
 
 <div class="container">
@@ -137,6 +137,7 @@ footer {
     <a href="#mpio">MPIO Policy</a>
     <a href="#paths">Windows MPIO Path Limit</a>
     <a href="#alua">ALUA Validation</a>
+    <a href="#persistence">iSCSI Persistence</a>
     <a href="#results">Result Severity</a>
     <a href="#report">HTML Report</a>
     <a href="#preconnection">Pre-Connection State</a>
@@ -209,7 +210,7 @@ host03</pre>
 <thead><tr><th>Scope</th><th>What It Validates</th></tr></thead>
 <tbody>
 <tr><td>Windows / Network</td><td>Host reachability, storage NIC discovery, IPv4 configuration, DNS registration, DNS servers, persistent default routes, interface state, and related Windows network settings.</td></tr>
-<tr><td>iSCSI / MPIO</td><td>Microsoft iSCSI Initiator service, Multipath-IO installation, PURE FlashArray MSDSM registration, configured target portals, active sessions, and visible Pure disks.</td></tr>
+<tr><td>iSCSI / MPIO</td><td>Microsoft iSCSI Initiator service, Multipath-IO installation, PURE FlashArray MSDSM registration, configured target portals, active sessions, Microsoft persistent target registrations, and visible Pure disks.</td></tr>
 <tr><td>Pure Target Connectivity</td><td>TCP/3260 reachability to every configured Pure target plus selected source NIC and source IP.</td></tr>
 <tr><td>Hyper-V</td><td>Hyper-V role/service state, storage NIC use by vSwitches, and explicit Live Migration use.</td></tr>
 <tr><td>Failover Cluster</td><td>Cluster membership, node state, storage-network cluster roles, quorum, physical disks, and CSV inventory.</td></tr>
@@ -262,7 +263,7 @@ host03</pre>
 </ul>
 
 <p>A newly added path belongs to the existing MPIO device. Individual paths do not have their own load-balancing policy. If path expansion crosses the 10-path threshold, the validator re-evaluates the device policy.</p>
-<div class="note"><b>RRWS:</b> Windows may report <b>Round Robin with Subset</b> for an ALUA-aware device. v1.5.1 reports RRWS explicitly. It does not silently treat the host/global RR default as proof of the existing device policy and does not automatically remediate RRWS without topology-specific Pure guidance.</div>
+<div class="note"><b>RRWS:</b> Windows may report <b>Round Robin with Subset</b> for an ALUA-aware device. v1.5.2 reports RRWS explicitly. It does not silently treat the host/global RR default as proof of the existing device policy and does not automatically remediate RRWS without topology-specific Pure guidance.</div>
 </section>
 
 <section id="paths">
@@ -294,6 +295,18 @@ host03</pre>
 </ul>
 <p>Uniform and Non-Uniform topology modes have different expected ALUA behavior. If the validator cannot safely correlate MSDSM/ALUA data with a Pure device, it reports INFO instead of inferring ownership.</p>
 <p>The Pure Device MPIO / ALUA Summary reports the Windows/MSDSM policy name, path count, and aggregate Active/Optimized and Active/Unoptimized state counts for each safely identified Pure MPIO device. The summary is organized as collapsible <b>Host &rarr; Device</b> sections so each device keeps its path-health and policy-assessment findings together.</p>
+</section>
+
+<section id="persistence">
+<h2>iSCSI Reboot Persistence</h2>
+<p>v1.5.2 validates reboot persistence from the Microsoft iSCSI persistent target registrations for the required Pure target addresses.</p>
+<ul>
+<li><b>PASS:</b> every required Pure target address has a persistent-login registration.</li>
+<li><b>WARNING:</b> one or more required Pure target addresses are missing a persistent-login registration.</li>
+<li><b>INFO:</b> persistent-target enumeration is unavailable, or a live <code>Get-IscsiSession</code> object reports <code>IsPersistent=False</code> while the required persistent target registrations are complete.</li>
+</ul>
+<p>The live-session <code>IsPersistent</code> property is supporting runtime evidence only. It is not used by itself to generate a persistence warning because Windows can expose a live session with <code>IsPersistent=False</code> even when the corresponding startup persistent-login registration exists.</p>
+<div class="note">The validator remains read-only. It does not register, unregister, disconnect, or reconnect iSCSI sessions.</div>
 </section>
 
 <section id="results">
@@ -402,7 +415,7 @@ host03</pre>
 </section>
 
 <footer>
-Pure Storage Host Validation / Readiness &nbsp;•&nbsp; Version 1.4.11<br>
+Pure Storage Host Validation / Readiness &nbsp;•&nbsp; Version 1.5.2<br>
 Integrated documentation generated locally by the tool. No web connection is required.
 </footer>
 </main>
